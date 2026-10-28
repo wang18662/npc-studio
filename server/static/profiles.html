@@ -37,6 +37,24 @@
         <input id="f-name" placeholder="如 Guard_Elite">
         <span class="hint">这个值要写进敌人的 Tag：<code>AIProfile:Guard_Elite</code></span>
       </div>
+
+      <div class="compare-bar">
+        <label>对比</label>
+        <select id="compareSelect">
+          <option value="">（不对比）</option>
+        </select>
+        <label class="toggle">
+          <input type="checkbox" id="onlyDiff" checked>
+          只看差异
+        </label>
+        <button id="btnHistory" class="mini">版本历史</button>
+        <span class="compare-hint">选另一个档案，查看参数差异</span>
+      </div>
+
+      <div id="historyPanel" class="history-panel" hidden></div>
+
+      <div id="diffView" class="diff" hidden></div>
+
       <div id="form"></div>
       <div class="result-bar">
         <div id="issues" class="issues"></div>

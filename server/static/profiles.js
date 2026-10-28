@@ -80,7 +80,9 @@ function renderList() {
 function select(i) {
   current = i;
   renderList();
+  fillCompareOptions();
   renderForm();
+  renderDiff();
 }
 
 // ============================================================
@@ -115,10 +117,18 @@ function renderField(field, row) {
   const value = raw === undefined || raw === '' ? (field.default ?? '') : raw;
   const tip = field.description ? ` title="${escapeAttr(field.description)}"` : '';
 
+  // 这个字段参与了哪些约束——改之前就知道会牵连什么。
+  const related = constraintsFor(field.key);
+  const badge = related.length
+    ? `<span class="c-badge" title="${escapeAttr(
+        related.map((c) => `${c.id}: ${c.expr}`).join('\n')
+      )}">${related.map((c) => c.id).join(' ')}</span>`
+    : '';
+
   if (field.type === 'bool') {
     const on = isTrue(value);
     return `<div class="field"${tip}>
-      <label>${field.label}</label>
+      <label>${field.label}${badge}</label>
       <select data-key="${field.key}">
         <option value="True" ${on ? 'selected' : ''}>True</option>
         <option value="False" ${!on ? 'selected' : ''}>False</option>
@@ -131,9 +141,18 @@ function renderField(field, row) {
   const unit = field.unit ? `<span class="unit">${field.unit}</span>` : '';
 
   return `<div class="field"${tip}>
-    <label>${field.label}${unit}</label>
+    <label>${field.label}${badge}${unit}</label>
     <input type="number" step="any" data-key="${field.key}" value="${value}" ${min} ${max}>
   </div>`;
+}
+
+/** 找出某字段参与的所有约束。 */
+function constraintsFor(fieldKey) {
+  if (!schema || !schema.constraints) return [];
+  const norm = normalizeKey(fieldKey);
+  return schema.constraints.filter((constraint) =>
+    normalizeExpr(constraint.expr).includes(norm)
+  );
 }
 
 function bindEvents(row) {
@@ -230,8 +249,192 @@ function escapeAttr(text) {
 }
 
 // ============================================================
+// 档案对比
+// ============================================================
+
+function fillCompareOptions() {
+  const select = $('compareSelect');
+  const previous = select.value;
+
+  select.innerHTML =
+    '<option value="">（不对比）</option>' +
+    rows
+      .map((row, index) =>
+        index === current ? '' : `<option value="${index}">${row.Name || '(未命名)'}</option>`
+      )
+      .join('');
+
+  // 尽量保留原来的选择；如果那个索引变成当前档案了就清空
+  const kept = Number(previous);
+  if (previous && kept !== current && rows[kept]) {
+    select.value = previous;
+  } else {
+    select.value = '';
+  }
+}
+
+function renderDiff() {
+  const box = $('diffView');
+  const selected = $('compareSelect').value;
+
+  if (selected === '') {
+    box.hidden = true;
+    return;
+  }
+
+  const currentRow = rows[current];
+  const otherRow = rows[Number(selected)];
+  if (!currentRow || !otherRow) {
+    box.hidden = true;
+    return;
+  }
+
+  const onlyDiff = $('onlyDiff').checked;
+  const lines = [];
+
+  schema.fields.forEach((field) => {
+    const rawA = readValue(currentRow, field.key);
+    const rawB = readValue(otherRow, field.key);
+    const a = rawA === undefined || rawA === '' ? field.default : rawA;
+    const b = rawB === undefined || rawB === '' ? field.default : rawB;
+
+    const same = String(a) === String(b);
+    if (onlyDiff && same) return;
+
+    lines.push({ field, a, b, same, delta: deltaText(field, a, b) });
+  });
+
+  box.hidden = false;
+
+  if (!lines.length) {
+    box.innerHTML = '<div class="diff-empty">两个档案的参数完全一致。</div>';
+    return;
+  }
+
+  const changedCount = lines.filter((line) => !line.same).length;
+
+  box.innerHTML = `
+    <div class="diff-head">
+      <span><b>${escapeHtml(currentRow.Name || '')}</b> vs <b>${escapeHtml(
+    otherRow.Name || ''
+  )}</b></span>
+      <span>${changedCount} 项不同</span>
+    </div>
+    <table class="diff-table">
+      <thead>
+        <tr>
+          <th>参数</th>
+          <th>${escapeHtml(currentRow.Name || '')}</th>
+          <th>${escapeHtml(otherRow.Name || '')}</th>
+          <th>差异</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lines
+          .map(
+            (line) => `<tr class="${line.same ? '' : 'changed'}">
+              <td>${line.field.label}</td>
+              <td class="val-a">${line.a}${line.field.unit || ''}</td>
+              <td class="val-b">${line.b}${line.field.unit || ''}</td>
+              <td class="diff-delta">${line.delta}</td>
+            </tr>`
+          )
+          .join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function deltaText(field, a, b) {
+  if (String(a) === String(b)) return '—';
+
+  if (field.type === 'bool') {
+    return isTrue(b) ? '开' : '关';
+  }
+
+  const na = parseFloat(a);
+  const nb = parseFloat(b);
+  if (!Number.isFinite(na) || !Number.isFinite(nb)) return '不同';
+
+  const diff = nb - na;
+  if (diff === 0) return '—';
+  return `${diff > 0 ? '+' : ''}${Number(diff.toFixed(3))}`;
+}
+
+// ============================================================
+// 版本历史
+// ============================================================
+
+async function toggleHistory() {
+  const panel = $('historyPanel');
+
+  if (!panel.hidden) {
+    panel.hidden = true;
+    return;
+  }
+
+  const data = await fetch('/api/profiles/history').then((r) => r.json());
+  const items = data.items || [];
+
+  panel.hidden = false;
+
+  if (!items.length) {
+    panel.innerHTML =
+      '<div class="history-empty">还没有历史版本。<br>每次点「保存」会自动留一份，最多保留 50 份。</div>';
+    return;
+  }
+
+  panel.innerHTML =
+    `<div class="history-tip">相同内容只保留一份；回滚前会自动备份当前状态。</div>` +
+    items
+      .map(
+        (item) => `<div class="history-item">
+        <span class="time">${formatStamp(item.stamp)}</span>
+        <span class="meta">${item.count} 条 · ${escapeHtml(item.names.join(' / '))}</span>
+        <button class="mini rollback" data-file="${item.file}">回滚</button>
+      </div>`
+      )
+      .join('');
+
+  panel.querySelectorAll('.rollback').forEach((btn) => {
+    btn.addEventListener('click', () => rollback(btn.dataset.file));
+  });
+}
+
+function formatStamp(stamp) {
+  const match = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(stamp);
+  if (!match) return stamp;
+  return `${match[1]}-${match[2]}-${match[3]} ${match[4]}:${match[5]}:${match[6]}`;
+}
+
+async function rollback(filename) {
+  if (!confirm('回滚到这个版本？\n\n当前内容会先自动备份一份，回滚之后也能再回来。')) {
+    return;
+  }
+
+  const result = await fetch('/api/profiles/rollback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file: filename }),
+  }).then((r) => r.json());
+
+  if (!result.ok) {
+    alert(result.reason || '回滚失败');
+    return;
+  }
+
+  $('historyPanel').hidden = true;
+  await boot();
+  alert('已回滚到该版本');
+}
+
+// ============================================================
 // 事件绑定
 // ============================================================
+
+$('compareSelect').addEventListener('change', renderDiff);
+$('onlyDiff').addEventListener('change', renderDiff);
+$('btnHistory').addEventListener('click', toggleHistory);
 
 $('btnSave').addEventListener('click', save);
 $('btnNew').addEventListener('click', () => {

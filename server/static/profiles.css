@@ -154,10 +154,23 @@ button.danger { color: var(--bad); }
   font-size: 11px;
   color: var(--muted);
   display: flex;
+  align-items: center;
   justify-content: space-between;
 }
 
 .field label .unit { color: var(--faint); }
+
+.field label .c-badge {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(79, 156, 249, 0.12);
+  color: #6b9fe8;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  cursor: help;
+  margin-right: auto;
+}
 
 .field input, .field select {
   background: var(--card);
@@ -179,6 +192,162 @@ button.danger { color: var(--bad); }
   bottom: 0;
   background: linear-gradient(180deg, rgba(22,24,29,0) 0%, #16181d 40%);
   padding-top: 14px;
+}
+
+/* ---------- 对比 ---------- */
+
+.compare-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+
+.compare-bar > label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.compare-bar select {
+  min-width: 160px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+
+.compare-bar select:focus { border-color: #3f5c8a; }
+
+.compare-bar .toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--faint);
+  cursor: pointer;
+  user-select: none;
+}
+
+.compare-bar .toggle input { cursor: pointer; }
+
+.compare-hint {
+  font-size: 11px;
+  color: var(--faint);
+  margin-left: auto;
+}
+
+.diff { margin-bottom: 20px; }
+
+.diff-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.diff-head b { color: var(--text); font-weight: 500; }
+
+.diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.diff-table th {
+  text-align: left;
+  padding: 7px 10px;
+  color: var(--faint);
+  font-weight: 500;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.diff-table th:nth-child(2),
+.diff-table th:nth-child(3),
+.diff-table th:nth-child(4) { text-align: right; }
+
+.diff-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #21242b;
+  color: var(--muted);
+}
+
+.diff-table td:nth-child(2),
+.diff-table td:nth-child(3),
+.diff-table td:nth-child(4) {
+  text-align: right;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.diff-table tr.changed td { background: rgba(232, 194, 90, 0.07); }
+.diff-table tr.changed .val-a { color: var(--faint); }
+.diff-table tr.changed .val-b { color: var(--warn); }
+
+.diff-delta { color: var(--warn); }
+
+.diff-empty {
+  color: var(--faint);
+  font-size: 12px;
+  padding: 12px 0;
+}
+
+/* ---------- 版本历史 ---------- */
+
+.history-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #1b1e24;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #21242b;
+  font-size: 12px;
+}
+
+.history-tip {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--faint);
+  background: #191c22;
+  border-bottom: 1px solid #21242b;
+}
+
+.history-item:last-child { border-bottom: none; }
+
+.history-item .time {
+  color: var(--text);
+  font-family: ui-monospace, Consolas, monospace;
+  white-space: nowrap;
+}
+
+.history-item .meta {
+  color: var(--faint);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item .rollback { margin-left: auto; flex-shrink: 0; }
+
+.history-empty {
+  padding: 14px 12px;
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 .issues { font-size: 12px; }
