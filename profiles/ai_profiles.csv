@@ -1,0 +1,4 @@
+Name,StopDistance,AcceptanceRadius,bUseSeparation,bFailWhenNoTarget,WoundedStopDistance,bUseWoundedStopDistance,RetreatDistance,FleeDistance,RetreatMaxRange,FleeMaxRangeMultiplier,bFaceTargetWhileRetreating,RetreatRepathThreshold,bUseInfluenceForRetreat,InfluenceSearchRadius,InfluenceImproveThreshold,CoverSearchRadius,CoverArriveRadius,bHealInterruptedBySight,CoverTravelTimeout,MaxCoverAttempts,HealHopelessTimeout,DesperateSpeedMultiplier,DesperateEngageDistance,bUseMemory,MemoryDuration,ScanDuration,SearchAcceptanceRadius,ChaseTimeout,ScanYawSpeed
+Guard_Grunt,1200,100,True,False,800,True,1200,3000,4000,1.5,True,150,True,600,0.05,1500,150,True,4,3,12,1.3,600,True,10,4,150,4,120
+Guard_Elite,300,120,True,False,900,True,1500,3500,4500,1.6,True,180,True,700,0.05,1800,160,True,5,4,10,1.4,700,True,12,5,160,4,140
+Guard_Heavy,350,140,True,False,1000,True,1800,4200,5200,1.7,True,200,True,800,0.06,2000,180,True,5,4,10,1.5,800,True,14,6,180,5,150

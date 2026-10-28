@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NPC Studio · AI 参数档案</title>
+<link rel="stylesheet" href="/static/profiles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <b>NPC Studio</b>
+    <span id="schemaName">加载中…</span>
+    <span id="adapterName" class="adapter"></span>
+  </div>
+  <div class="actions">
+    <button id="btnNew">+ 新建</button>
+    <button id="btnDuplicate">复制</button>
+    <button id="btnDelete" class="danger">删除</button>
+    <button id="btnExport">导出 CSV</button>
+    <button id="btnSave" class="primary">保存</button>
+    <a class="link" href="/">返回演示 →</a>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+    <div class="side-head">档案（RowName）</div>
+    <div id="list"></div>
+  </aside>
+
+  <section class="form-pane">
+    <div id="empty" class="empty">左侧没有档案，点「+ 新建」创建一条</div>
+    <div id="editor" hidden>
+      <div class="name-row">
+        <label>RowName</label>
+        <input id="f-name" placeholder="如 Guard_Elite">
+        <span class="hint">这个值要写进敌人的 Tag：<code>AIProfile:Guard_Elite</code></span>
+      </div>
+      <div id="form"></div>
+      <div class="result-bar">
+        <div id="issues" class="issues"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/profiles.js"></script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+{
+  "schemaVersion": "1.0.0",
+  "npcId": "guard_base",
+  "name": "守卫（基础）",
+  "tags": [
+    "humanoid",
+    "friendly"
+  ],
+  "attributes": {
+    "hp": 100,
+    "atk": 10,
+    "def": 5
+  },
+  "layers": {
+    "locomotion": {
+      "initialState": "s_patrol",
+      "states": [
+        {
+          "id": "s_patrol",
+          "name": "巡逻",
+          "archetype": "movement",
+          "priority": 10,
+          "requires": [
+            "Move",
+            "Animate"
+          ],
+          "locks": [
+            "Attack"
+          ],
+          "params": {
+            "speed": 3.0,
+            "radius": 5.0,
+            "waitTime": 2.0
+          },
+          "transitions": [
+            {
+              "to": "s_chase",
+              "priority": 10,
+              "condition": "distance(player) < 8 && hasLineOfSight(player)"
+            },
+            {
+              "to": "s_stand",
+              "priority": 1,
+              "condition": "time_in_state > 30"
+            }
+          ]
+        },
+        {
+          "id": "s_stand",
+          "name": "站桩",
+          "archetype": "idle",
+          "priority": 5,
+          "requires": [
+            "Animate"
+          ],
+          "locks": [],
+          "params": {
+            "lookAround": true
+          },
+          "transitions": [
+            {
+              "to": "s_patrol",
+              "priority": 5,
+              "condition": "time_in_state > 10"
+            }
+          ]
+        },
+        {
+          "id": "s_chase",
+          "name": "追击",
+          "archetype": "movement",
+          "priority": 50,
+          "requires": [
+            "Move",
+            "Animate"
+          ],
+          "locks": [
+            "Attack"
+          ],
+          "params": {
+            "speed": 5.0,
+            "giveUpDistance": 15.0
+          },
+          "transitions": [
+            {
+              "to": "s_hold",
+              "priority": 20,
+              "condition": "distance(player) < 2",
+              "emit": "player_in_attack_range"
+            },
+            {
+              "to": "s_patrol",
+              "priority": 1,
+              "condition": "distance(player) > 15"
+            }
+          ]
+        },
+        {
+          "id": "s_hold",
+          "name": "驻留",
+          "archetype": "movement",
+          "priority": 50,
+          "requires": [
+            "Rotate"
+          ],
+          "locks": [],
+          "params": {
+            "keepFacing": true
+          },
+          "transitions": [
+            {
+              "to": "s_chase",
+              "priority": 10,
+              "condition": "distance(player) > 2"
+            }
+          ]
+        }
+      ]
+    },
+    "interaction": {
+      "initialState": "s_idle",
+      "states": [
+        {
+          "id": "s_idle",
+          "name": "空闲",
+          "archetype": "idle",
+          "priority": 0,
+          "requires": [],
+          "locks": [],
+          "params": {},
+          "transitions": [
+            {
+              "to": "s_talk",
+              "priority": 10,
+              "condition": "on_player_interact"
+            }
+          ]
+        },
+        {
+          "id": "s_talk",
+          "name": "对话",
+          "archetype": "interaction",
+          "priority": 100,
+          "requires": [
+            "Speak",
+            "Animate"
+          ],
+          "locks": [
+            "Move",
+            "Attack"
+          ],
+          "params": {
+            "dialogueId": "guard_dialogue"
+          },
+          "transitions": [
+            {
+              "to": "s_idle",
+              "priority": 10,
+              "condition": "on_dialogue_end"
+            }
+          ]
+        }
+      ]
+    },
+    "combat": {
+      "initialState": "s_wait",
+      "states": [
+        {
+          "id": "s_wait",
+          "name": "待战",
+          "archetype": "idle",
+          "priority": 0,
+          "requires": [],
+          "locks": [],
+          "params": {},
+          "transitions": [
+            {
+              "to": "s_attack",
+              "priority": 10,
+              "condition": "on_player_in_attack_range"
+            }
+          ]
+        },
+        {
+          "id": "s_attack",
+          "name": "攻击",
+          "archetype": "combat",
+          "priority": 80,
+          "requires": [
+            "Attack",
+            "Animate"
+          ],
+          "locks": [
+            "Move"
+          ],
+          "params": {
+            "cooldown": 1.5,
+            "damage": 10,
+            "range": 2.0
+          },
+          "transitions": [
+            {
+              "to": "s_backoff",
+              "priority": 10,
+              "condition": "self.hp < 30"
+            },
+            {
+              "to": "s_wait",
+              "priority": 5,
+              "condition": "distance(player) > 2"
+            }
+          ]
+        },
+        {
+          "id": "s_backoff",
+          "name": "后撤",
+          "archetype": "combat",
+          "priority": 80,
+          "requires": [
+            "Move",
+            "Animate"
+          ],
+          "locks": [
+            "Attack"
+          ],
+          "params": {
+            "distance": 5.0
+          },
+          "transitions": [
+            {
+              "to": "s_attack",
+              "priority": 5,
+              "condition": "time_in_state > 3"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "ai": {
+    "enabled": true,
+    "model": "deepseek-chat",
+    "maxTurns": 10,
+    "intents": [
+      {
+        "id": "intent_quest",
+        "name": "询问任务",
+        "examples": [
+          "有什么任务吗",
+          "需要帮忙吗",
+          "我能做什么",
+          "有活干吗"
+        ],
+        "knowledgeRefs": [
+          "任务"
+        ],
+        "fallback": "我现在没空，你去找村长吧。",
+        "allowedTools": [
+          "give_quest"
+        ]
+      },
+      {
+        "id": "intent_location",
+        "name": "询问位置",
+        "examples": [
+          "西门在哪",
+          "广场怎么走",
+          "村长家在哪",
+          "这里是哪里"
+        ],
+        "knowledgeRefs": [
+          "位置"
+        ],
+        "fallback": "往东走两条街就是广场。"
+      },
+      {
+        "id": "intent_rule",
+        "name": "询问规矩",
+        "examples": [
+          "为什么关门",
+          "晚上能出去吗",
+          "有什么规矩"
+        ],
+        "knowledgeRefs": [
+          "规矩"
+        ],
+        "fallback": "入夜之后西门关闭，这是规矩。"
+      },
+      {
+        "id": "intent_who",
+        "name": "询问身份",
+        "examples": [
+          "你是谁",
+          "你叫什么",
+          "在这里多久了"
+        ],
+        "knowledgeRefs": [
+          "关于我"
+        ],
+        "fallback": "我叫阿岩，在这儿当值。"
+      },
+      {
+        "id": "intent_danger",
+        "name": "询问危险",
+        "examples": [
+          "路上危险吗",
+          "有劫匪吗",
+          "要注意什么"
+        ],
+        "knowledgeRefs": [
+          "危险",
+          "商道"
+        ],
+        "fallback": "路上不太平，小心点。"
+      }
+    ],
+    "tools": [
+      {
+        "name": "give_quest",
+        "enabled": true,
+        "preconditions": {
+          "requiredStates": [
+            "s_idle",
+            "s_talk"
+          ],
+          "requiredCapabilities": [
+            "Interact"
+          ]
+        }
+      }
+    ],
+    "knowledgeBase": "guard_faq"
+  },
+  "meta": {
+    "author": "designer_a",
+    "updatedAt": "2026-10-27T00:30:00+08:00",
+    "notes": "所有守卫的基础模板"
+  }
+}

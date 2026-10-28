@@ -1,0 +1,52 @@
+{
+  "id": "shooterai",
+  "displayName": "ShooterAI（UE5 StateTree）",
+  "engine": "unreal",
+  "schemaId": "npc.pursue",
+  "description": "把通用 SKU 映射到 FStateTreePursueTaskInstanceData 的字段。这是整个工具链里唯一允许出现引擎字段名的地方。",
+  "target": {
+    "struct": "FStateTreePursueTaskInstanceData",
+    "dataTable": "/Game/AI/DT_NPCAIProfile",
+    "taskClass": "FStateTreePursueTask"
+  },
+  "mapping": {
+    "pursue.stopDistance": "StopDistance",
+    "pursue.acceptanceRadius": "AcceptanceRadius",
+    "pursue.useSeparation": "bUseSeparation",
+    "pursue.failWhenNoTarget": "bFailWhenNoTarget",
+
+    "wounded.stopDistance": "WoundedStopDistance",
+    "wounded.enabled": "bUseWoundedStopDistance",
+
+    "health.retreatDistance": "RetreatDistance",
+    "health.fleeDistance": "FleeDistance",
+    "health.retreatMaxRange": "RetreatMaxRange",
+    "health.fleeMaxRangeMultiplier": "FleeMaxRangeMultiplier",
+    "health.faceTargetWhileRetreating": "bFaceTargetWhileRetreating",
+    "health.repathThreshold": "RetreatRepathThreshold",
+    "health.useInfluenceForRetreat": "bUseInfluenceForRetreat",
+    "health.influenceSearchRadius": "InfluenceSearchRadius",
+    "health.influenceImproveThreshold": "InfluenceImproveThreshold",
+
+    "cover.searchRadius": "CoverSearchRadius",
+    "cover.arriveRadius": "CoverArriveRadius",
+    "cover.healInterruptedBySight": "bHealInterruptedBySight",
+    "cover.travelTimeout": "CoverTravelTimeout",
+    "cover.maxAttempts": "MaxCoverAttempts",
+    "cover.healHopelessTimeout": "HealHopelessTimeout",
+    "cover.desperateSpeedMultiplier": "DesperateSpeedMultiplier",
+    "cover.desperateEngageDistance": "DesperateEngageDistance",
+
+    "memory.enabled": "bUseMemory",
+    "memory.duration": "MemoryDuration",
+    "memory.scanDuration": "ScanDuration",
+    "memory.searchRadius": "SearchAcceptanceRadius",
+    "memory.chaseTimeout": "ChaseTimeout",
+    "memory.scanYawSpeed": "ScanYawSpeed"
+  },
+  "classMapping": [
+    { "pattern": "*Elite*", "profile": "Guard_Elite" },
+    { "pattern": "*Heavy*", "profile": "Guard_Heavy" },
+    { "pattern": "*ShooterNPC*", "profile": "Guard_Grunt" }
+  ]
+}

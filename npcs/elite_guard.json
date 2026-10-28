@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "npcId": "elite_guard",
+  "name": "精英守卫",
+  "extends": "guard_base",
+  "tags": ["humanoid", "hostile", "elite"],
+  "overrides": {
+    "attributes.hp": 200,
+    "attributes.atk": 18,
+    "layers.locomotion.states.s_chase.params.speed": 6.5,
+    "layers.combat.states.s_attack.params.damage": 25,
+    "layers.combat.states.s_attack.params.cooldown": 1.0,
+    "ai.tools": [
+      {
+        "name": "give_quest",
+        "enabled": true,
+        "preconditions": {
+          "requiredStates": ["s_idle", "s_talk"],
+          "requiredCapabilities": ["Interact"]
+        }
+      },
+      {
+        "name": "summon_ally",
+        "enabled": true,
+        "preconditions": {
+          "requiredStates": ["s_attack"],
+          "requiredCapabilities": ["Interact"]
+        }
+      }
+    ]
+  },
+  "meta": {
+    "author": "designer_a",
+    "updatedAt": "2026-10-27T12:00:00+08:00",
+    "notes": "精英守卫：继承 guard_base，提速、加伤、解锁召唤援军"
+  }
+}

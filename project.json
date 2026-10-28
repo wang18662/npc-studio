@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectId": "chuandi_demo",
+  "projectName": "Chuandi Demo",
+  "defaultLocale": "zh-CN",
+  "layers": ["locomotion", "interaction", "combat"],
+  "capabilities": [
+    { "id": "Move", "description": "控制位置移动" },
+    { "id": "Rotate", "description": "控制朝向" },
+    { "id": "Attack", "description": "执行攻击动作" },
+    { "id": "Speak", "description": "播放对话或语音" },
+    { "id": "Animate", "description": "播放动画" },
+    { "id": "Interact", "description": "触发交互（开门/交易）" }
+  ],
+  "paramDefinitions": {
+    "idle": {
+      "lookAround": { "type": "bool", "default": true }
+    },
+    "movement": {
+      "speed": { "type": "float", "min": 0, "max": 20, "default": 3.0, "unit": "m/s" },
+      "radius": { "type": "float", "min": 0, "max": 50, "default": 5.0, "unit": "m" },
+      "waitTime": { "type": "float", "min": 0, "max": 60, "default": 2.0, "unit": "s" },
+      "giveUpDistance": { "type": "float", "min": 0, "max": 100, "default": 15.0, "unit": "m" },
+      "keepFacing": { "type": "bool", "default": true }
+    },
+    "perception": {},
+    "combat": {
+      "cooldown": { "type": "float", "min": 0, "max": 60, "default": 1.5, "unit": "s" },
+      "damage": { "type": "int", "min": 0, "max": 9999, "default": 10 },
+      "range": { "type": "float", "min": 0, "max": 20, "default": 2.0, "unit": "m" },
+      "distance": { "type": "float", "min": 0, "max": 50, "default": 5.0, "unit": "m" }
+    },
+    "interaction": {
+      "dialogueId": { "type": "string", "default": "" }
+    },
+    "special": {}
+  },
+  "capabilityConflictPolicy": "lock",
+  "lockTimeout": 5.0
+}

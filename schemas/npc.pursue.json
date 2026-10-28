@@ -1,0 +1,375 @@
+{
+  "$schema": "./schema-meta.json",
+  "id": "npc.pursue",
+  "title": "NPC 追击 AI",
+  "version": "1.0.0",
+  "description": "描述一个 NPC 在「发现目标 → 追击 → 丢失 → 搜索 → 放弃」这条链路上的可调参数。与具体引擎无关，引擎字段名由 adapter 映射。",
+  "groups": [
+    {
+      "id": "pursue",
+      "title": "追击"
+    },
+    {
+      "id": "wounded",
+      "title": "受伤谨慎"
+    },
+    {
+      "id": "health",
+      "title": "血量档位"
+    },
+    {
+      "id": "cover",
+      "title": "掩体与回血"
+    },
+    {
+      "id": "memory",
+      "title": "记忆与搜索"
+    }
+  ],
+  "fields": [
+    {
+      "key": "pursue.stopDistance",
+      "group": "pursue",
+      "label": "停火距离",
+      "type": "float",
+      "unit": "cm",
+      "min": 0,
+      "max": 3000,
+      "default": 250,
+      "description": "追到这个距离就停下开火。设 0 表示一直追到贴脸。"
+    },
+    {
+      "key": "pursue.acceptanceRadius",
+      "group": "pursue",
+      "label": "到达半径",
+      "type": "float",
+      "unit": "cm",
+      "min": 10,
+      "max": 500,
+      "default": 100,
+      "description": "判定「已经到达目标点」的距离误差。"
+    },
+    {
+      "key": "pursue.useSeparation",
+      "group": "pursue",
+      "label": "群体分离",
+      "type": "bool",
+      "default": true,
+      "description": "多个敌人同时追击时，是否互相推开避免挤成一坨。"
+    },
+    {
+      "key": "pursue.failWhenNoTarget",
+      "group": "pursue",
+      "label": "无目标即失败",
+      "type": "bool",
+      "default": false,
+      "description": "找不到目标时立刻结束这个状态（让状态机转去搜索/漫游）。关闭时会保持运行，由外部条件决定退出。"
+    },
+    {
+      "key": "wounded.stopDistance",
+      "group": "wounded",
+      "label": "受伤停火距离",
+      "type": "float",
+      "unit": "cm",
+      "min": 0,
+      "max": 3000,
+      "default": 800,
+      "description": "受伤时使用的接触距离，应大于正常停火距离。表现为「被打中就往后退一点」。"
+    },
+    {
+      "key": "wounded.enabled",
+      "group": "wounded",
+      "label": "启用受伤谨慎",
+      "type": "bool",
+      "default": true,
+      "description": "关闭后受伤也不会拉开距离。"
+    },
+    {
+      "key": "health.retreatDistance",
+      "group": "health",
+      "label": "边退边打距离",
+      "type": "float",
+      "unit": "cm",
+      "min": 200,
+      "max": 5000,
+      "default": 1200,
+      "description": "血量偏低但还没危险时，想保持的距离。"
+    },
+    {
+      "key": "health.fleeDistance",
+      "group": "health",
+      "label": "逃跑距离",
+      "type": "float",
+      "unit": "cm",
+      "min": 500,
+      "max": 8000,
+      "default": 3000,
+      "description": "血量危险时，想拉开的距离。"
+    },
+    {
+      "key": "health.retreatMaxRange",
+      "group": "health",
+      "label": "后撤最远",
+      "type": "float",
+      "unit": "cm",
+      "min": 1000,
+      "max": 20000,
+      "default": 4000,
+      "description": "后撤/逃跑的最远距离，超过就停下，避免跑出地图或跑出战斗。"
+    },
+    {
+      "key": "health.fleeMaxRangeMultiplier",
+      "group": "health",
+      "label": "逃跑距离倍率",
+      "type": "float",
+      "unit": "x",
+      "min": 1,
+      "max": 4,
+      "default": 1.5,
+      "description": "逃跑档位下，最远距离再乘这个系数。真逃跑应该跑得比边退边打更远。"
+    },
+    {
+      "key": "health.faceTargetWhileRetreating",
+      "group": "health",
+      "label": "后撤时面向目标",
+      "type": "bool",
+      "default": true,
+      "description": "只影响「边退边打」，不影响「逃跑」。逃跑一律背对目标。"
+    },
+    {
+      "key": "health.repathThreshold",
+      "group": "health",
+      "label": "重下发阈值",
+      "type": "float",
+      "unit": "cm",
+      "min": 30,
+      "max": 800,
+      "default": 150,
+      "description": "后撤目标点是每帧按目标实时位置重算的。阈值太小会导致寻路反复重置，角色抽搐。"
+    },
+    {
+      "key": "health.useInfluenceForRetreat",
+      "group": "health",
+      "label": "用影响图选点",
+      "type": "bool",
+      "default": true,
+      "description": "后撤时用影响图做安全点修正。追击时不能用（会与接近目标矛盾）。"
+    },
+    {
+      "key": "health.influenceSearchRadius",
+      "group": "health",
+      "label": "影响图搜索半径",
+      "type": "float",
+      "unit": "cm",
+      "min": 100,
+      "max": 3000,
+      "default": 600,
+      "description": "在后撤目标点周围搜索安全点的半径。"
+    },
+    {
+      "key": "health.influenceImproveThreshold",
+      "group": "health",
+      "label": "安全度提升阈值",
+      "type": "float",
+      "min": 0,
+      "max": 1,
+      "default": 0.05,
+      "description": "只有安全度提升超过这个值才替换目标点。太小会被噪声带着抖。"
+    },
+    {
+      "key": "cover.searchRadius",
+      "group": "cover",
+      "label": "掩体搜索半径",
+      "type": "float",
+      "unit": "cm",
+      "min": 300,
+      "max": 5000,
+      "default": 1500,
+      "description": "找掩体时的搜索范围。"
+    },
+    {
+      "key": "cover.arriveRadius",
+      "group": "cover",
+      "label": "到达掩体半径",
+      "type": "float",
+      "unit": "cm",
+      "min": 30,
+      "max": 500,
+      "default": 150,
+      "description": "到达掩体点的判定距离。"
+    },
+    {
+      "key": "cover.healInterruptedBySight",
+      "group": "cover",
+      "label": "被看见打断回血",
+      "type": "bool",
+      "default": true,
+      "description": "玩家看着敌人回血却打不断，观感很假。开启后被打断会重新找掩体。"
+    },
+    {
+      "key": "cover.travelTimeout",
+      "group": "cover",
+      "label": "奔掩体超时",
+      "type": "float",
+      "unit": "s",
+      "min": 0.5,
+      "max": 15,
+      "default": 4,
+      "description": "超时后放弃掩体，改为直线远离。掩体点可能不可达（落在墙后/隔壁房间），没有这个熔断会一直卡着。"
+    },
+    {
+      "key": "cover.maxAttempts",
+      "group": "cover",
+      "label": "掩体最大尝试",
+      "type": "int",
+      "unit": "次",
+      "min": 1,
+      "max": 10,
+      "default": 3,
+      "description": "连续几次「到了却仍暴露」后，本次逃跑彻底放弃掩体，避免在几个点之间来回跑。"
+    },
+    {
+      "key": "cover.healHopelessTimeout",
+      "group": "cover",
+      "label": "回血无望超时",
+      "type": "float",
+      "unit": "s",
+      "min": 0,
+      "max": 60,
+      "default": 12,
+      "description": "带着道具但找不到地方用的超时。超时后转拼死。设 0 关闭该兜底。"
+    },
+    {
+      "key": "cover.desperateSpeedMultiplier",
+      "group": "cover",
+      "label": "拼死提速",
+      "type": "float",
+      "unit": "x",
+      "min": 1,
+      "max": 3,
+      "default": 1.3,
+      "description": "快死了又没退路，冲得比平时更猛。"
+    },
+    {
+      "key": "cover.desperateEngageDistance",
+      "group": "cover",
+      "label": "拼死开火距离",
+      "type": "float",
+      "unit": "cm",
+      "min": 0,
+      "max": 3000,
+      "default": 600,
+      "description": "拼死冲锋时冲到多近停下开火。设 0 沿用停火距离。给 0 会导致「举着枪撞人，一枪不放」。"
+    },
+    {
+      "key": "memory.enabled",
+      "group": "memory",
+      "label": "启用记忆",
+      "type": "bool",
+      "default": true,
+      "description": "丢失目标后是否进入搜索阶段。关闭后一丢就走。"
+    },
+    {
+      "key": "memory.duration",
+      "group": "memory",
+      "label": "记忆时长",
+      "type": "float",
+      "unit": "s",
+      "min": 0.5,
+      "max": 60,
+      "default": 10,
+      "description": "超过这个时间没再看见目标，就彻底放弃。"
+    },
+    {
+      "key": "memory.scanDuration",
+      "group": "memory",
+      "label": "环视时长",
+      "type": "float",
+      "unit": "s",
+      "min": 0,
+      "max": 30,
+      "default": 4,
+      "description": "到达最后已知位置后，原地环视多久再放弃。"
+    },
+    {
+      "key": "memory.searchRadius",
+      "group": "memory",
+      "label": "搜索到达半径",
+      "type": "float",
+      "unit": "cm",
+      "min": 20,
+      "max": 500,
+      "default": 150,
+      "description": "判定「已到达最后已知位置」的距离。"
+    },
+    {
+      "key": "memory.chaseTimeout",
+      "group": "memory",
+      "label": "追赶超时",
+      "type": "float",
+      "unit": "s",
+      "min": 0.5,
+      "max": 30,
+      "default": 4,
+      "description": "追不到记忆点就就地开始搜索。记忆点可能不可达（目标贴着柱子消失），没有这个熔断会一直卡到放弃。"
+    },
+    {
+      "key": "memory.scanYawSpeed",
+      "group": "memory",
+      "label": "环视转速",
+      "type": "float",
+      "unit": "°/s",
+      "min": 0,
+      "max": 720,
+      "default": 120,
+      "description": "环视时的转向速度。设 0 会导致原地不动。"
+    }
+  ],
+  "constraints": [
+    {
+      "id": "C001",
+      "expr": "pursue.stopDistance < health.retreatDistance",
+      "message": "停火距离应小于边退边打距离，否则血量低时反而贴得更近"
+    },
+    {
+      "id": "C002",
+      "expr": "health.retreatDistance < health.retreatMaxRange",
+      "message": "边退边打距离应小于后撤最远距离"
+    },
+    {
+      "id": "C003",
+      "expr": "health.retreatDistance < health.fleeDistance",
+      "message": "边退边打距离应小于逃跑距离，否则两档没区别"
+    },
+    {
+      "id": "C004",
+      "expr": "wounded.stopDistance > pursue.stopDistance",
+      "message": "受伤停火距离应大于正常停火距离，否则「受伤后撤」变成贴脸"
+    },
+    {
+      "id": "C005",
+      "expr": "memory.chaseTimeout < memory.duration",
+      "message": "追赶超时应小于记忆时长，否则追不到也不会就地搜索"
+    },
+    {
+      "id": "C006",
+      "expr": "cover.desperateEngageDistance > 0",
+      "message": "拼死开火距离为 0 会导致拼死阶段举枪不开火"
+    },
+    {
+      "id": "C007",
+      "expr": "health.repathThreshold >= 50",
+      "message": "重下发阈值太小会导致目标点每帧变化、角色抽搐"
+    },
+    {
+      "id": "C008",
+      "expr": "cover.travelTimeout <= 15",
+      "message": "奔掩体超时过长会显得呆滞"
+    },
+    {
+      "id": "C009",
+      "expr": "memory.scanYawSpeed > 0",
+      "message": "环视转速为 0 会导致敌人站着不动"
+    }
+  ]
+}
